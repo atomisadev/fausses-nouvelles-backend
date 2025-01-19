@@ -63,4 +63,21 @@ app.MapPost("/api/nlp/rating", async (NlpService nlpService, string input) =>
     .WithName("ArticleRating")
     .WithOpenApi();
 
+app.MapPost("/api/nlp/classify", async (NlpService nlpService, ArticleInput input) =>
+{
+    try
+    {
+        var result = await nlpService.ClassifyArticleAsync(input.Content);
+        return Results.Ok(result);
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem(
+            title: "Classification failed",
+            detail: ex.Message,
+            statusCode: StatusCodes.Status500InternalServerError
+        );
+    }
+}).WithName("ClassifyArticle").WithOpenApi();
+
 app.Run();

@@ -218,7 +218,7 @@ public class NlpService
         if (!articles.Any()) return 0;
         return articles.Count(a => a.SimilarityScore >= 0.8) / (double)articles.Count;
     }
-    
+
     /*private static int LevenshteinDistance(string s, string t) {
         // Special cases
         if (s == t) return 0;
@@ -242,12 +242,12 @@ public class NlpService
     public List<Tuple<AllSidesRating, int>> GetSourceRating(string sourceInput)
     {
         int maxDistance = 70;
-        
+
         // fuzzy find the closest search to given source
         var matches = from rating in AllSidesDataset
-            let distance = Fuzz.PartialRatio(rating.news_source, sourceInput)
-            where distance >= maxDistance
-            select new Tuple<AllSidesRating, int>(rating, distance);
+                      let distance = Fuzz.PartialRatio(rating.news_source, sourceInput)
+                      where distance >= maxDistance
+                      select new Tuple<AllSidesRating, int>(rating, distance);
         var matchesList = matches.OrderBy(x => x.Item2).ToList();
         matchesList.Reverse();
 
@@ -268,6 +268,62 @@ public class NlpService
         {
             // Read the records into a list
             return csv.GetRecords<AllSidesRating>().ToList();
+        }
+    }
+
+    public async Task<CohereResponse> ClassifyArticleAsync(string content)
+    {
+        try
+        {
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://api.cohere.com/v1/classify");
+
+            var payload = new
+            {
+                model = "6232087b-d2f6-4e96-8b04-dc5f2e4de918-ft",
+                inputs = new[] { content }
+            };
+
+            request.Content = new StringContent(
+                JsonSerializer.Serialize(payload),
+                Encoding.UTF8,
+                "application/json"
+            );
+
+            request.Headers.Authorization = new AuthenticationHeaderValue(
+                "Bearer",
+                _configuration["CohereApi:ApiKey"]
+            );
+
+            _logger.LogInformation("Sending classification request to Cohere API");
+            var response = await _httpClient.SendAsync(request);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Cohere API error: {StatusCode} - {Error}",
+                    response.StatusCode, error);
+                throw new Exception($"Cohere API error: {error}");
+            }
+
+            var jsonResponse = await response.Content.ReadAsStringAsync();
+            _logger.LogInformation("Received Cohere response: {Response}", jsonResponse);
+
+            var cohereResponse = JsonSerializer.Deserialize<CohereApiResponse>(jsonResponse);
+            var classification = cohereResponse?.classifications.FirstOrDefault();
+
+            return new CohereResponse
+            {
+                Prediction = classification?.prediction ?? "unknown",
+                Confidences = classification?.labels.ToDictionary(
+                    x => x.Key,
+                    x => x.Value.confidence
+                ) ?? new Dictionary<string, double>()
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to classify article");
+            throw;
         }
     }
 }
@@ -302,7 +358,7 @@ public class AllSidesRating
     public string news_source { get; set; }
     public string rating { get; set; }
     public string rating_num { get; set; }
-    public string type {get; set;}
+    public string type { get; set; }
     public string agree { get; set; }
     public string disagree { get; set; }
     public string perc_agree { get; set; }
@@ -316,4 +372,20 @@ public class AllSidesRating
     public string wiki { get; set; }
     public string facebook { get; set; }
     public string screen_name { get; set; }
+}
+
+public class CohereApiResponse
+{
+    public List<CohereClassification> classifications { get; set; }
+}
+
+public class CohereClassification
+{
+    public string prediction { get; set; }
+    public Dictionary<string, CohereLabel> labels { get; set; }
+}
+
+public class CohereLabel
+{
+    public double confidence { get; set; }
 }

@@ -35,3 +35,8 @@
 /Users/mohitsrinivasan/Documents/Programming/faussesnouvelles/backend/obj/Debug/net9.0/backend.pdb
 /Users/mohitsrinivasan/Documents/Programming/faussesnouvelles/backend/obj/Debug/net9.0/backend.genruntimeconfig.cache
 /Users/mohitsrinivasan/Documents/Programming/faussesnouvelles/backend/obj/Debug/net9.0/ref/backend.dll
+/Users/mohitsrinivasan/Documents/Programming/faussesnouvelles/backend/bin/Debug/net9.0/CsvHelper.dll
+/Users/mohitsrinivasan/Documents/Programming/faussesnouvelles/backend/bin/Debug/net9.0/FuzzySharp.dll
+/Users/mohitsrinivasan/Documents/Programming/faussesnouvelles/backend/bin/Debug/net9.0/Microsoft.Bcl.AsyncInterfaces.dll
+/Users/mohitsrinivasan/Documents/Programming/faussesnouvelles/backend/bin/Debug/net9.0/System.Linq.Async.dll
+/Users/mohitsrinivasan/Documents/Programming/faussesnouvelles/backend/obj/Debug/net9.0/backend.sourcelink.json
