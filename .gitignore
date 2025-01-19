@@ -1,5 +1,10 @@
+# Existing entries
 appsettings.json
 datasets/
 test/fakenews.csv
 obj/
 bin/
+
+# Additional entries to prevent large files
+*.csv
+test/*.csv
