@@ -10,10 +10,11 @@ public record ArticleAnalysis
 
 public record Entity(string Text, string Type, double Confidence);
 
-public record SimilarArticle(string Title, string Url, double SimilarityScore);
+public record SimilarArticle(string Title, string Url, string Source, double SimilarityScore);
 
 public record CohereResponse
 {
     public string Prediction { get; init; }
     public Dictionary<string, double> Confidences { get; init; } = new();
 }
+

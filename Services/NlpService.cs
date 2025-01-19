@@ -147,8 +147,8 @@ public class NlpService
             {
                 if (string.IsNullOrEmpty(article.description)) continue;
 
-                _logger.LogInformation("Processing article: {Title}\nDescription: {Description}",
-                    article.title, article.description);
+                _logger.LogInformation("Processing article: {Title}\nSource: {Source}\nDescription: {Description}",
+                    article.title, article.source?.name, article.description);
 
                 var similarityScore = await CalculateSimilarityScore(article.description, article.description);
                 if (similarityScore > 0.3) // Only include articles with meaningful similarity
@@ -156,6 +156,7 @@ public class NlpService
                     similarArticles.Add(new SimilarArticle(
                         article.title ?? "Untitled",
                         article.url ?? "",
+                        article.source?.name ?? "Unknown Source",
                         similarityScore
                     ));
                 }
