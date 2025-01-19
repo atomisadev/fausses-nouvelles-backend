@@ -153,10 +153,17 @@ public class NlpService
                 var similarityScore = await CalculateSimilarityScore(article.description, article.description);
                 if (similarityScore > 0.3) // Only include articles with meaningful similarity
                 {
+                    // Truncate content to 20 words
+                    var truncatedContent = string.Join(" ",
+                        (article.content ?? article.description ?? "")
+                            .Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
+                            .Take(20)) + "...";
+
                     similarArticles.Add(new SimilarArticle(
                         article.title ?? "Untitled",
                         article.url ?? "",
                         article.source?.name ?? "Unknown Source",
+                        truncatedContent,
                         similarityScore
                     ));
                 }
