@@ -1,6 +1,10 @@
+using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using CsvHelper;
+using System.Linq;
+using FuzzySharp;
 
 public class NlpService
 {
@@ -11,9 +15,11 @@ public class NlpService
     private const string NEWS_API_URL = "https://newsapi.org/v2/everything";
     private const string NER_MODEL = "dslim/bert-base-NER";
     private const string SIMILARITY_MODEL = "sentence-transformers/all-MiniLM-L6-v2";
+    private static List<AllSidesRating> AllSidesDataset;
 
     public NlpService(HttpClient httpClient, IConfiguration configuration, ILogger<NlpService> logger)
     {
+        AllSidesDataset = LoadAllSidesDataset();
         _httpClient = httpClient;
         _configuration = configuration;
         _logger = logger;
@@ -212,6 +218,58 @@ public class NlpService
         if (!articles.Any()) return 0;
         return articles.Count(a => a.SimilarityScore >= 0.8) / (double)articles.Count;
     }
+    
+    /*private static int LevenshteinDistance(string s, string t) {
+        // Special cases
+        if (s == t) return 0;
+        if (s.Length == 0) return t.Length;
+        if (t.Length == 0) return s.Length;
+        // Initialize the distance matrix
+        int[, ] distance = new int[s.Length + 1, t.Length + 1];
+        for (int i = 0; i <= s.Length; i++) distance[i, 0] = i;
+        for (int j = 0; j <= t.Length; j++) distance[0, j] = j;
+        // Calculate the distance
+        for (int i = 1; i <= s.Length; i++) {
+            for (int j = 1; j <= t.Length; j++) {
+                int cost = (s[i - 1] == t[j - 1]) ? 0 : 1;
+                distance[i, j] = Math.Min(Math.Min(distance[i - 1, j] + 1, distance[i, j - 1] + 1), distance[i - 1, j - 1] + cost);
+            }
+        }
+        // Return the distance
+        return distance[s.Length, t.Length];
+    }*/
+
+    public List<Tuple<AllSidesRating, int>> GetSourceRating(string sourceInput)
+    {
+        int maxDistance = 70;
+        
+        // fuzzy find the closest search to given source
+        var matches = from rating in AllSidesDataset
+            let distance = Fuzz.PartialRatio(rating.news_source, sourceInput)
+            where distance >= maxDistance
+            select new Tuple<AllSidesRating, int>(rating, distance);
+        var matchesList = matches.OrderBy(x => x.Item2).ToList();
+        matchesList.Reverse();
+
+        try
+        {
+            return matchesList[..5];
+        }
+        catch (Exception e)
+        {
+            return matchesList;
+        }
+    }
+
+    public List<AllSidesRating> LoadAllSidesDataset()
+    {
+        using (var reader = new StreamReader("./datasets/allsides_data.csv"))
+        using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+        {
+            // Read the records into a list
+            return csv.GetRecords<AllSidesRating>().ToList();
+        }
+    }
 }
 
 public class NewsApiResponse
@@ -237,4 +295,25 @@ public class NewsSource
 {
     public string id { get; set; }
     public string name { get; set; }
+}
+
+public class AllSidesRating
+{
+    public string news_source { get; set; }
+    public string rating { get; set; }
+    public string rating_num { get; set; }
+    public string type {get; set;}
+    public string agree { get; set; }
+    public string disagree { get; set; }
+    public string perc_agree { get; set; }
+    public string url { get; set; }
+    public string editorial_review { get; set; }
+    public string blind_survey { get; set; }
+    public string third_party_analysis { get; set; }
+    public string independent_research { get; set; }
+    public string confidence_level { get; set; }
+    public string twitter { get; set; }
+    public string wiki { get; set; }
+    public string facebook { get; set; }
+    public string screen_name { get; set; }
 }

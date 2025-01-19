@@ -44,4 +44,23 @@ app.MapPost("/api/nlp/corroborate", async (NlpService nlpService, ArticleInput i
 .WithName("CorroborateArticle")
 .WithOpenApi();
 
+app.MapPost("/api/nlp/rating", async (NlpService nlpService, string input) =>
+{
+    try
+    {
+        var response = nlpService.GetSourceRating(input);
+        return Results.Ok(response);
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem(
+            title: "Article Analysis Failed",
+            detail: ex.Message,
+            statusCode: StatusCodes.Status500InternalServerError
+            );
+    }
+})
+    .WithName("ArticleRating")
+    .WithOpenApi();
+
 app.Run();
